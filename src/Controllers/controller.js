@@ -1,66 +1,58 @@
 const db = require('../DAL/Repository/repository');
-const data = require('../../pokemon.json')
+const data = require('../../pokemon.json');
 const service = require('../Services/service');
+const fs = require('fs');
+
+const pokemons = fs.readFileSync('pokemon.json');
+const pokemonParsed = JSON.parse(pokemons);
 
 const pokedex = db.collection('pokedex');
-let bulkWriter = db.bulkWriter()
-let writeBatch = db.batch()
-
+let bulkWriter = db.bulkWriter();
+let docId = []
 
 exports.createPokedex = async (req, res) => {
 
     try {
 
-        data.forEach(async function (pokemon) {
+        // -- delete --
 
-            const pokeRef = pokedex.doc(pokemon.id + '')
+        const snapshot = await pokedex.get()
 
-            await bulkWriter
-                .delete(pokeRef)
-                .then(
-                    result => {
-                        console.log('Delete success!');
-                    })
-                .catch(err => {
-                    console.log('Deletion failed cause of: ', err);
-                });
+        snapshot.forEach(doc => {
 
-            await bulkWriter
-                .set(pokeRef, {pokemon})
-                .then(result => {
-                    console.log('BulkWriter success');
-                })
-                .catch(err => {
-                    console.log('BulkWriter failed: ', err);
-                })
-
-
-
-            // setDoc(pokeRef, pokemon, {merge: true})
-            //     .then(pokeRef => {
-            //         console.log('Document has been added successfully!');
-            //     })
-            //     .catch(err => {
-            //         console.log('Adding failed cause of: ', err);
-            //     })
-
-            // await db.runTransaction(async (t) => {
-            //     const doc = await t.get(pokeRef);
-            //     const newPokemon = doc.data()
-            //     t.update(pokeRef, {pokemon: newPokemon})
-            // }).catch(err => {
-            //     console.log(err);
-            // })
-
-
-            // await batch.update(pokeRef, {pokedex : pokemon});
-
-
-            // await pokedex.add(pokemon);
+            docId.push(doc.id);
 
         });
 
-        console.log('Data sent to Firestore successfully...');
+        docId.forEach(async function (docId) {
+
+            const pokeRef = pokedex.doc(`${docId}`)
+
+            bulkWriter.delete(pokeRef);
+
+        });
+
+        // -- end of delete --
+
+        // -- set --
+
+        data.forEach(async function (pokemon) {
+
+            const pokeRef = pokedex.doc()
+
+            bulkWriter.set(pokeRef, pokemon);
+
+        });
+
+        // -- end of set --
+
+        // -- writer close --
+
+        await bulkWriter.close().then(() => {
+            console.log('Data sent to Firestore successfully...');
+        });
+
+        // -- end of writer close --
 
         return true;
 

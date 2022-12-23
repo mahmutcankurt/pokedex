@@ -5,8 +5,8 @@ const pokeControllers = require('../Controllers/controller');
 /* POST METHODS */
 
 router.post('/create-pokedex', pokeControllers.createPokedex);
-router.get('/pokemon/list', pokeControllers.getPokemonList);
-router.post('/pokemon/list', pokeControllers.getPokemonList);
+// router.get('/pokemon/list', pokeControllers.getPokemonList);
+// router.post('/pokemon/list', pokeControllers.getPokemonList);
 // router.post('/image/upload', pokeControllers.createPokedex);
 
 
